@@ -47,5 +47,6 @@ def train(epochs = 30,batch = 8,device=torch.device('cpu')):
             num_correct = (pred == batch_y).sum()
             eval_acc += num_correct.data[0]
         print('Test Loss: {:.6f}, Acc: {:.6f}'.format(eval_loss / (len(val_data)), eval_acc / (len(val_data))))
+    torch.save(model,'simpleresult.pkl')
 device_2 = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
 train(30,8,device=device_2)
