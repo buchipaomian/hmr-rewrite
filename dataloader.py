@@ -99,7 +99,9 @@ class PairedDataset(Dataset):
         joint = []
         for item in k:
             joint.append(k[item][0])
-        return image,joint,file_id
+        if self.transform is not None:
+            image = self.transform(image)
+        return image,joint
         # # default transforms, pad if needed and center crop 512
         # width_pad = self.size - image_width // 2
         # if width_pad < 0:

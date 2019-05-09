@@ -1,5 +1,5 @@
 import dataloader
-from models.simpleconv import SimConv
+from models.multiconv import MutiConv
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 import torch
@@ -12,18 +12,18 @@ def train(epochs = 30,batch = 8,device=torch.device('cpu')):
     train_loader = DataLoader(dataset= train_data,batch_size=batch,shuffle=True)
     val_loader = DataLoader(dataset= val_data,batch_size=batch)
 
-    model = SimConv().to(device)
+    model = MutiConv().to(device)
     print(model)
     optimizer = torch.optim.Adam(model.parameters())
-    loss_func = torch.nn.BCEWithLogitsLoss()
-
+    loss_func = torch.nn.SmoothL1Loss()
+    size = 3
     for epoch in range(epochs):
         print('epoch {}'.format(epoch+1))
         # start training
         train_loss = 0.
         train_acc = 0.
         for batch_x,batch_y in train_loader:
-            batch_x,batch_y = Variable(batch_x.to(device)),Variable(torch.from_numpy(np.array([batch_y])).to(device))
+            batch_x,batch_y = Variable(batch_x.to(device)),Variable(torch.from_numpy(np.array([pointsize(batch_y,size)])).to(device))
             out = model(batch_x)
             #out=out.reshape(60)
             #print(out)
@@ -43,7 +43,7 @@ def train(epochs = 30,batch = 8,device=torch.device('cpu')):
         eval_loss = 0.
         eval_acc = 0.
         for batch_x, batch_y in val_loader:
-            batch_x, batch_y = Variable(batch_x.to(device), volatile=True),Variable(torch.from_numpy(np.array(batch_y),dtype=torch.long).to(device), volatile=True)
+            batch_x, batch_y = Variable(batch_x.to(device), volatile=True),Variable(torch.from_numpy(np.array([pointsize(batch_y,size)]),dtype=torch.long).to(device), volatile=True)
             out = model(batch_x)
             loss = loss_func(out.double(), batch_y)
             eval_loss += loss.data[0]
@@ -51,6 +51,19 @@ def train(epochs = 30,batch = 8,device=torch.device('cpu')):
             num_correct = (pred == batch_y).sum()
             eval_acc += num_correct.data[0]
         print('Test Loss: {:.6f}, Acc: {:.6f}'.format(eval_loss / (len(val_data)), eval_acc / (len(val_data))))
-    torch.save(model,'simpleresult.pkl')
+        if train_loss/eval_loss > 10:
+            size+=1
+        if epoch%5 == 0:
+            torch.save(model,'multiepoch'+epoch+'.pkl')
+    torch.save(model,'multiresult.pkl')
+
+
+def pointsize(x,size):
+    result = []
+    for k in x:
+        a = k*(10**size)
+        result.append(int(a)/(10**size))
+    return result
+
 device_2 = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 train(30,1,device=device_2)

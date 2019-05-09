@@ -16,6 +16,8 @@ class SimConv(torch.nn.Module):
         self.conv3 = torch.nn.Sequential(
             torch.nn.Conv2d(64, 64, 3, 1, 1),
             torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2),
+            torch.nn.MaxPool2d(2),
             torch.nn.MaxPool2d(2)
         )
         self.dense = torch.nn.Sequential(

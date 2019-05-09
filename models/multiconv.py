@@ -1,62 +1,52 @@
 import torch
 import torch.nn as nn
 
-Norm = nn.BatchNorm2d
-
-class MulticonvGenerator(nn.Module):
-    """
-    this is the generator of basic model
-    """
+class MutiConv(torch.nn.Module):
     def __init__(self):
-        super(MulticonvGenerator, self).__init__()
+        super(MutiConv,self).__init__()
+        #256 to 128
+        self.conv1 = torch.nn.Sequential(
+            torch.nn.Conv2d(3, 32, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        #128to64
+        self.conv2 = torch.nn.Sequential(
+            torch.nn.Conv2d(32, 64, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        #64to32
+        self.conv3 = torch.nn.Sequential(
+            torch.nn.Conv2d(64, 128, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        # 32to16
+        self.conv4 = torch.nn.Sequential(
+            torch.nn.Conv2d(128, 256, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        #16to8
+        self.conv5 = torch.nn.Sequential(
+            torch.nn.Conv2d(256, 512, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        #8to4
+        self.conv6 = torch.nn.Sequential(
+            torch.nn.Conv2d(512, 512, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        # 4to2
+        self.conv7 = torch.nn.Sequential(
+            torch.nn.Conv2d(512, 512, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
+        #2to1
+        self.conv8 = torch.nn.Sequential(
+            torch.nn.Conv2d(512, 1024, 3, 1, 1),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2))
 
-        self.bias = True
-        self.dim = 3
-    
-    def _down_sample(self):
-        layers = nn.ModuleList()
-        #224
-        layers.append(McNetDownSample(self.dim, self.dim * 2, self.bias))
-        #112
-        layers.append(McNetDownSample(self.dim*2, self.dim * 4, self.bias))
-        #56
-        layers.append(McNetDownSample(self.dim*4, self.dim * 8, self.bias))
-        #28
-        layers.append(McNetDownSample(self.dim*8, self.dim * 16, self.bias))
-        #14
-        layers.append(McNetDownSample(self.dim*16, self.dim * 32, self.bias))
-        #7*7*192
-        layers.append(McNetDownSample(self.dim*32, self.dim * 64, self.bias))
-        
-        return layers
-
-
-class McNetDownSample(nn.Module):
-    def __init__(self, in_channels, out_channels, bias=True):
-        super(McNetDownSample, self).__init__()
-
-        self.conv1 = nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=bias)
-        self.norm1 = Norm(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=bias)
-        self.norm2 = Norm(out_channels)
-        self.pool = nn.MaxPool2d(2, 2, return_indices=True)
-
-        if in_channels == out_channels:
-            self.channel_map = nn.Sequential()
-        else:
-            self.channel_map = nn.Conv2d(
-                in_channels, out_channels, kernel_size=1, bias=False)
-
-    def forward(self, x):
-        feature = torch.relu(x)
-
-        feature = self.conv1(feature)
-        feature = self.norm1(feature)
-
-        feature = torch.relu(feature)
-        feature = self.conv2(feature)
-        feature = self.norm2(feature)
-
-        connection = feature + self.channel_map(x)
-        feature, idx = self.pool(connection)
-        return feature, connection, idx
+        self.dense = torch.nn.Sequential(
+            torch.nn.Linear(1024 * 1 * 1, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 60)
+        )
