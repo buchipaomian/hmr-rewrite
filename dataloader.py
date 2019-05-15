@@ -97,8 +97,13 @@ class PairedDataset(Dataset):
         k = csvfile.to_dict()
         del k['frame']
         joint = []
+        i = 0
         for item in k:
-            joint.append(k[item][0])
+            if i%3 == 0:
+                joint.append(k[item][0])
+            else:
+                joint.append(-k[item][0])
+            i+=1
         if self.transform is not None:
             image = self.transform(image)
         return image,joint
