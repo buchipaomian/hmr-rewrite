@@ -89,7 +89,7 @@ class PictoTwoDataset(Dataset):
         count = 1
         for item in k:
             if count%3 == 0:
-                jointB.append(-k[item][0])
+                jointA.append(-k[item][0])
             elif count%3 == 1:
                 jointA.append(k[item][0])
             else:
@@ -97,4 +97,4 @@ class PictoTwoDataset(Dataset):
             count += 1
         if self.transform is not None:
             image = self.transform(image)
-        return image,jointA,jointB
+        return image,jointA,jointB,file_id
