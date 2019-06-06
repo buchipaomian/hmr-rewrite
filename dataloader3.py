@@ -29,7 +29,7 @@ import pandas as pd
 #             label = label.cuda()
 #         return data, label
 
-class PairedDataset(Dataset):
+class PictoTwoDataset(Dataset):
     """
     Composed of
     (origanal image,output csv)
@@ -80,65 +80,22 @@ class PairedDataset(Dataset):
         csv_filename = self.csv_files[index]
         file_id = img_filename.split('/')[-1][:-4]
 
-        # if self.color_histogram:
-        #     # build colorgram tensor
-        #     color_info = self.color_cache.get(file_id, None)
-        #     if color_info is None:
-        #         with open(
-        #                 os.path.join('./data/colorgram', '%s.json' % file_id).replace('\\', '/'),
-        #                 'r') as json_file:
-        #             # load color info dictionary from json file
-        #             color_info = json.loads(json_file.read())
-        #             self.color_cache[file_id] = color_info
-        #     colors = make_colorgram_tensor(color_info)
-
         image = Image.open(img_filename)
+        image = image.resize((224,224))
         csvfile = pd.read_csv(csv_filename)
         k = csvfile.to_dict()
         del k['frame']
-        joint = []
-        i = 0
+        jointA = []
+        jointB = []
+        count = 1
         for item in k:
-            if i%3 == 0:
-                joint.append(k[item][0])
+            if count%3 == 0:
+                jointB.append(-k[item][0])
+            elif count%3 == 1:
+                jointA.append(k[item][0])
             else:
-                joint.append(-k[item][0])
-            i+=1
+                jointA.append(-k[item][0])
+            count += 1
         if self.transform is not None:
             image = self.transform(image)
-        return image,joint
-        # # default transforms, pad if needed and center crop 512
-        # width_pad = self.size - image_width // 2
-        # if width_pad < 0:
-        #     # do not pad
-        #     width_pad = 0
-
-        # height_pad = self.size - image_height
-        # if height_pad < 0:
-        #     height_pad = 0
-
-        # # padding as white
-        # padding = transforms.Pad((width_pad // 2, height_pad // 2 + 1,
-        #                           width_pad // 2 + 1, height_pad // 2),
-        #                          (255, 255, 255))
-
-        # # use center crop
-        # crop = transforms.CenterCrop(self.size)
-
-        # imageA = padding(imageA)
-        # imageA = crop(imageA)
-
-        # imageB = padding(imageB)
-        # imageB = crop(imageB)
-
-        # if self.transform is not None:
-        #     imageA = self.transform(imageA)
-        #     imageB = self.transform(imageB)
-
-        # # scale image into range [-1, 1]
-        # imageA = scale(imageA)
-        # imageB = scale(imageB)
-        # if not self.color_histogram:
-        #     return imageA, imageB
-        # else:
-        #     return imageA, imageB, colors
+        return image,jointA,jointB,file_id
